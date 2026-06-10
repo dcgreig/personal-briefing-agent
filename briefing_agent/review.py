@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 
 from briefing_agent.models import Category, Classification, ReviewDecision
 
@@ -54,6 +55,16 @@ def accept_all_classifications(
             changed=False,
         )
         for classification in classifications
+    ]
+
+
+def finalized_classifications(
+    reviewed_items: list[ReviewDecision],
+) -> list[Classification]:
+    """Return classifications after human review decisions are applied."""
+    return [
+        replace(reviewed_item.original, category=reviewed_item.final_category)
+        for reviewed_item in reviewed_items
     ]
 
 

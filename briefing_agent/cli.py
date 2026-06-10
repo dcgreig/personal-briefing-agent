@@ -12,11 +12,20 @@ from briefing_agent.adapters import (
     MockJiraAdapter,
     load_items_from_adapters,
 )
+from briefing_agent.actions import suggest_actions
 from briefing_agent.audit import append_audit_log
-from briefing_agent.briefing import build_briefing, build_markdown_briefing
+from briefing_agent.briefing import (
+    build_action_suggestions_report,
+    build_briefing,
+    build_markdown_briefing,
+)
 from briefing_agent.classifier import classify_all
 from briefing_agent.config import Settings, load_settings
-from briefing_agent.review import accept_all_classifications, review_classifications
+from briefing_agent.review import (
+    accept_all_classifications,
+    finalized_classifications,
+    review_classifications,
+)
 from briefing_agent.run_history import append_run_history
 
 
@@ -56,14 +65,8 @@ def main() -> None:
     items = load_items_from_adapters(adapters)
     classifications = classify_all(items)
     briefing = build_briefing(classifications, run_id, generated_at)
-    markdown_briefing = build_markdown_briefing(
-        classifications,
-        run_id,
-        generated_at,
-    )
 
     print(briefing)
-    write_briefing_output(markdown_briefing, settings.briefing_output_path)
 
     if settings.require_human_review:
         reviewed_items = review_classifications(classifications)
@@ -71,13 +74,31 @@ def main() -> None:
         reviewed_items = accept_all_classifications(classifications)
         print("\nHuman review skipped by config.")
 
-    append_audit_log(reviewed_items, audit_log_path, run_id, generated_at)
+    final_classifications = finalized_classifications(reviewed_items)
+    action_suggestions = suggest_actions(reviewed_items)
+    print(build_action_suggestions_report(final_classifications, action_suggestions))
+
+    markdown_briefing = build_markdown_briefing(
+        final_classifications,
+        run_id,
+        generated_at,
+        action_suggestions,
+    )
+    write_briefing_output(markdown_briefing, settings.briefing_output_path)
+
+    append_audit_log(
+        reviewed_items,
+        action_suggestions,
+        audit_log_path,
+        run_id,
+        generated_at,
+    )
     append_run_history(
         settings.run_history_path,
         run_id,
         generated_at,
         settings.enabled_sources,
-        classifications,
+        final_classifications,
         settings.briefing_output_path,
         audit_log_path,
     )

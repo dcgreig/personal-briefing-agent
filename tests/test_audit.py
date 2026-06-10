@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from briefing_agent.audit import append_audit_log
-from briefing_agent.models import Classification, ReviewDecision
+from briefing_agent.models import ActionSuggestion, Classification, ReviewDecision
 
 
 class AuditLogTests(unittest.TestCase):
@@ -44,6 +44,22 @@ class AuditLogTests(unittest.TestCase):
 
             append_audit_log(
                 reviewed_items,
+                [
+                    ActionSuggestion(
+                        item_id="email-001",
+                        action_type="reply",
+                        title="Consider drafting a reply",
+                        rationale="A response may be needed.",
+                        requires_human_approval=True,
+                    ),
+                    ActionSuggestion(
+                        item_id="jira-001",
+                        action_type="review",
+                        title="Review for context",
+                        rationale="Read this later.",
+                        requires_human_approval=False,
+                    ),
+                ],
                 audit_path,
                 run_id="run-123",
                 generated_at=datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc),
@@ -69,6 +85,9 @@ class AuditLogTests(unittest.TestCase):
         self.assertTrue(records[1]["changed"])
         self.assertEqual(records[0]["run_id"], "run-123")
         self.assertEqual(records[1]["run_id"], "run-123")
+        self.assertEqual(records[0]["suggested_action"]["action_type"], "reply")
+        self.assertTrue(records[0]["suggested_action"]["requires_human_approval"])
+        self.assertEqual(records[1]["suggested_action"]["action_type"], "review")
         self.assertIn("timestamp", records[0])
 
 

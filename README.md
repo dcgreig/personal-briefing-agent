@@ -45,7 +45,8 @@ categories to override it:
 - `ignore`
 
 The audit log records the original classification, your final classification,
-whether you changed it, and the `run_id` for the CLI execution.
+whether you changed it, the dry-run suggested action, and the `run_id` for the
+CLI execution.
 
 The Markdown briefing includes:
 
@@ -54,7 +55,7 @@ The Markdown briefing includes:
 - a generated timestamp
 - summary counts by classification
 - sections for urgent, waiting-on-me, FYI, and ignored items
-- each item's title, source, type, classification, and reason
+- each item's title, source, type, classification, reason, and dry-run suggested action
 
 ## Running Tests
 
@@ -72,6 +73,7 @@ python -m pip install -e ".[test]"
 
 ```text
 briefing_agent/
+  actions.py      # deterministic dry-run action suggestions
   adapters.py     # local source adapters that produce BriefingItem objects
   audit.py        # JSONL audit log writer
   briefing.py     # terminal briefing formatting
@@ -87,6 +89,7 @@ data/
   mock_emails.json
   mock_jira_tasks.json
 tests/
+  test_actions.py
   test_adapters.py
   test_audit.py
   test_config.py
@@ -109,8 +112,9 @@ logs/
 6. Print a grouped "Daily Briefing" to the terminal.
 7. Save the briefing as Markdown if `briefing_output_path` is configured.
 8. Ask you to accept or override each classification if `require_human_review` is true.
-9. Append one JSON object per reviewed item to the configured audit log.
-10. Append one JSON object for the whole run to the configured run history log.
+9. Generate one deterministic dry-run action suggestion for each finalized item.
+10. Append one JSON object per reviewed item to the configured audit log.
+11. Append one JSON object for the whole run to the configured run history log.
 
 The classifier returns one of four categories:
 
@@ -122,6 +126,26 @@ The classifier returns one of four categories:
 The rules live in `briefing_agent/classifier.py`. They are deliberately written
 as readable Python conditionals so someone learning agentic development can see
 exactly why the agent made each decision.
+
+## Dry-Run Action Suggestions
+
+After classification and human review, the agent suggests one possible next
+action per finalized item. These suggestions are deterministic and local-only.
+They are not executed.
+
+Supported suggestion types are:
+
+- `no_action`
+- `review`
+- `reply`
+- `follow_up`
+- `update_task`
+
+Each suggestion includes an action type, title, rationale, and
+`requires_human_approval`. Suggestions that imply external work, such as
+replying to an email or updating a task, require human approval. The CLI only
+prints and logs the suggestion; it does not send emails, create drafts, update
+Jira, archive messages, modify tasks, or make network calls.
 
 ## Source Adapters
 

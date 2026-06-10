@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
 import unittest
 
-from briefing_agent.briefing import build_briefing, build_markdown_briefing
-from briefing_agent.models import Classification
+from briefing_agent.briefing import (
+    build_action_suggestions_report,
+    build_briefing,
+    build_markdown_briefing,
+)
+from briefing_agent.models import ActionSuggestion, Classification
 
 
 class MarkdownBriefingTests(unittest.TestCase):
@@ -47,6 +51,15 @@ class MarkdownBriefingTests(unittest.TestCase):
             classifications,
             run_id="run-123",
             generated_at=generated_at,
+            action_suggestions=[
+                ActionSuggestion(
+                    item_id="email-001",
+                    action_type="reply",
+                    title="Consider drafting a reply",
+                    rationale="A response may be needed.",
+                    requires_human_approval=True,
+                )
+            ],
         )
 
         self.assertIn("# Daily Briefing", markdown)
@@ -66,6 +79,11 @@ class MarkdownBriefingTests(unittest.TestCase):
         self.assertIn("- Type: email", markdown)
         self.assertIn("- Classification: urgent", markdown)
         self.assertIn("- Reason: The email is urgent.", markdown)
+        self.assertIn("- Suggested action: reply", markdown)
+        self.assertIn("- Action title: Consider drafting a reply", markdown)
+        self.assertIn("- Rationale: A response may be needed.", markdown)
+        self.assertIn("- Requires human approval: true", markdown)
+        self.assertIn("- Dry-run only: no action was executed.", markdown)
 
     def test_terminal_briefing_contains_run_id(self):
         generated_at = datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc)
@@ -85,6 +103,34 @@ class MarkdownBriefingTests(unittest.TestCase):
 
         self.assertIn("Run ID: run-123", briefing)
         self.assertIn("Generated: 2026-06-10T12:00:00+00:00", briefing)
+
+    def test_action_suggestions_report_is_explicitly_dry_run(self):
+        classifications = [
+            _classification(
+                item_id="email-001",
+                source_type="email",
+                source_name="mock_email",
+                title="Urgent email",
+                category="urgent",
+                reason="The email is urgent.",
+            )
+        ]
+        suggestions = [
+            ActionSuggestion(
+                item_id="email-001",
+                action_type="reply",
+                title="Consider drafting a reply",
+                rationale="A response may be needed.",
+                requires_human_approval=True,
+            )
+        ]
+
+        report = build_action_suggestions_report(classifications, suggestions)
+
+        self.assertIn("Dry-Run Action Suggestions", report)
+        self.assertIn("No external actions were executed.", report)
+        self.assertIn("Suggested action: reply", report)
+        self.assertIn("Requires human approval: true", report)
 
 
 def _classification(
