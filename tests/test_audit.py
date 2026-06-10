@@ -14,6 +14,7 @@ class AuditLogTests(unittest.TestCase):
                 original=Classification(
                     item_id="email-001",
                     source_type="email",
+                    source_name="mock_email",
                     title="Urgent email",
                     category="urgent",
                     summary="A short email summary.",
@@ -26,6 +27,7 @@ class AuditLogTests(unittest.TestCase):
                 original=Classification(
                     item_id="jira-001",
                     source_type="jira",
+                    source_name="mock_jira",
                     title="PBA-1: Review task",
                     category="waiting_on_me",
                     summary="A short Jira summary.",

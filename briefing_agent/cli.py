@@ -11,7 +11,7 @@ from briefing_agent.adapters import (
     load_items_from_adapters,
 )
 from briefing_agent.audit import append_audit_log
-from briefing_agent.briefing import build_briefing
+from briefing_agent.briefing import build_briefing, build_markdown_briefing
 from briefing_agent.classifier import classify_all
 from briefing_agent.config import Settings, load_settings
 from briefing_agent.review import accept_all_classifications, review_classifications
@@ -51,9 +51,10 @@ def main() -> None:
     items = load_items_from_adapters(adapters)
     classifications = classify_all(items)
     briefing = build_briefing(classifications)
+    markdown_briefing = build_markdown_briefing(classifications)
 
     print(briefing)
-    write_briefing_output(briefing, settings.briefing_output_path)
+    write_briefing_output(markdown_briefing, settings.briefing_output_path)
 
     if settings.require_human_review:
         reviewed_items = review_classifications(classifications)

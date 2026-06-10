@@ -25,7 +25,7 @@ DEFAULT_SETTINGS = Settings(
     enabled_sources=("mock_email", "mock_jira"),
     require_human_review=True,
     audit_log_path=Path("logs/audit.jsonl"),
-    briefing_output_path=Path("logs/daily_briefing.txt"),
+    briefing_output_path=Path("logs/daily_briefing.md"),
     lookback_hours=24,
 )
 

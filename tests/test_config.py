@@ -36,6 +36,12 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(settings.briefing_output_path, Path("tmp/briefing.txt"))
         self.assertEqual(settings.lookback_hours, 12)
 
+    def test_default_briefing_output_path_is_markdown(self):
+        self.assertEqual(
+            DEFAULT_SETTINGS.briefing_output_path,
+            Path("logs/daily_briefing.md"),
+        )
+
     def test_empty_briefing_output_path_disables_file_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             settings_path = Path(temp_dir) / "settings.toml"

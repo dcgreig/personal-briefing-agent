@@ -56,6 +56,7 @@ def _classification(category: str) -> Classification:
     return Classification(
         item_id="email-001",
         source_type="email",
+        source_name="mock_email",
         title="Example email",
         category=category,
         summary="A short summary.",

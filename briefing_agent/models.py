@@ -24,6 +24,7 @@ class BriefingItem:
 class Classification:
     item_id: str
     source_type: SourceType
+    source_name: str
     title: str
     category: Category
     summary: str

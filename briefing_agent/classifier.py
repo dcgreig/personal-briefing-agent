@@ -67,6 +67,7 @@ def _classify_email_item(item: BriefingItem) -> Classification:
         return Classification(
             item_id=item.item_id,
             source_type="email",
+            source_name=item.source_name,
             title=item.title,
             category="urgent",
             summary=_summarize(item.body),
@@ -77,6 +78,7 @@ def _classify_email_item(item: BriefingItem) -> Classification:
         return Classification(
             item_id=item.item_id,
             source_type="email",
+            source_name=item.source_name,
             title=item.title,
             category="waiting_on_me",
             summary=_summarize(item.body),
@@ -87,6 +89,7 @@ def _classify_email_item(item: BriefingItem) -> Classification:
         return Classification(
             item_id=item.item_id,
             source_type="email",
+            source_name=item.source_name,
             title=item.title,
             category="ignore",
             summary=_summarize(item.body),
@@ -96,6 +99,7 @@ def _classify_email_item(item: BriefingItem) -> Classification:
     return Classification(
         item_id=item.item_id,
         source_type="email",
+        source_name=item.source_name,
         title=item.title,
         category="fyi",
         summary=_summarize(item.body),
@@ -115,6 +119,7 @@ def _classify_jira_item(item: BriefingItem, today: date | None = None) -> Classi
         return Classification(
             item_id=item.item_id,
             source_type="jira",
+            source_name=item.source_name,
             title=item.title,
             category="ignore",
             summary=_summarize(item.body),
@@ -129,6 +134,7 @@ def _classify_jira_item(item: BriefingItem, today: date | None = None) -> Classi
         return Classification(
             item_id=item.item_id,
             source_type="jira",
+            source_name=item.source_name,
             title=item.title,
             category="urgent",
             summary=_summarize(item.body),
@@ -139,6 +145,7 @@ def _classify_jira_item(item: BriefingItem, today: date | None = None) -> Classi
         return Classification(
             item_id=item.item_id,
             source_type="jira",
+            source_name=item.source_name,
             title=item.title,
             category="waiting_on_me",
             summary=_summarize(item.body),
@@ -149,6 +156,7 @@ def _classify_jira_item(item: BriefingItem, today: date | None = None) -> Classi
         return Classification(
             item_id=item.item_id,
             source_type="jira",
+            source_name=item.source_name,
             title=item.title,
             category="fyi",
             summary=_summarize(item.body),
@@ -158,6 +166,7 @@ def _classify_jira_item(item: BriefingItem, today: date | None = None) -> Classi
     return Classification(
         item_id=item.item_id,
         source_type="jira",
+        source_name=item.source_name,
         title=item.title,
         category="fyi",
         summary=_summarize(item.body),

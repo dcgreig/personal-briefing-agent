@@ -27,9 +27,9 @@ It writes audit records to:
 
 - `logs/audit.jsonl`
 
-It also writes the latest briefing text to:
+It also writes the latest briefing to a Markdown file:
 
-- `logs/daily_briefing.txt`
+- `logs/daily_briefing.md`
 
 After the briefing is printed, the CLI shows each classified item one at a time.
 Press Enter to accept the suggested classification, or type one of these
@@ -42,6 +42,14 @@ categories to override it:
 
 The audit log records the original classification, your final classification,
 and whether you changed it.
+
+The Markdown briefing includes:
+
+- `# Daily Briefing`
+- a generated timestamp
+- summary counts by classification
+- sections for urgent, waiting-on-me, FYI, and ignored items
+- each item's title, source, type, classification, and reason
 
 ## Running Tests
 
@@ -80,7 +88,7 @@ tests/
   test_review.py
 logs/
   audit.jsonl          # generated when the CLI runs
-  daily_briefing.txt   # generated when the CLI runs
+  daily_briefing.md    # generated when the CLI runs
 ```
 
 ## How The Agent Works
@@ -91,7 +99,7 @@ logs/
 4. Run the classifier over those normalized `BriefingItem` objects.
 5. Build a short summary and reason for each item.
 6. Print a grouped "Daily Briefing" to the terminal.
-7. Save the briefing text if `briefing_output_path` is configured.
+7. Save the briefing as Markdown if `briefing_output_path` is configured.
 8. Ask you to accept or override each classification if `require_human_review` is true.
 9. Append one JSON object per reviewed item to the configured audit log.
 
@@ -129,7 +137,7 @@ Settings live in `config/settings.toml`:
 enabled_sources = ["mock_email", "mock_jira"]
 require_human_review = true
 audit_log_path = "logs/audit.jsonl"
-briefing_output_path = "logs/daily_briefing.txt"
+briefing_output_path = "logs/daily_briefing.md"
 lookback_hours = 24
 ```
 
@@ -140,7 +148,7 @@ The fields mean:
 - `enabled_sources`: which local adapters to run. Supported values are `mock_email` and `mock_jira`.
 - `require_human_review`: when `true`, the CLI asks you to approve or override each classification.
 - `audit_log_path`: where JSONL audit records are appended.
-- `briefing_output_path`: where the latest briefing text is saved. Set it to an empty string to skip file output.
+- `briefing_output_path`: where the latest Markdown briefing is saved. Set it to an empty string to skip file output.
 - `lookback_hours`: a source-setting placeholder for future adapters. The current mock adapters keep all sample records loaded so the tutorial remains stable.
 
 You can still override the audit path for a single run:
