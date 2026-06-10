@@ -1,0 +1,15 @@
+{
+  "item_id": "outlook-message-001",
+  "source_type": "email",
+  "source_name": "outlook_email",
+  "title": "Can you review the launch plan?",
+  "body": "Please review the launch plan before Friday.",
+  "metadata": {
+    "sender": "teammate@example.com",
+    "sender_name": "Teammate",
+    "received_at": "2026-06-10T13:00:00-04:00",
+    "importance": "normal",
+    "is_read": "false",
+    "folder": "Inbox"
+  }
+}

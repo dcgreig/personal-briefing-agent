@@ -91,6 +91,7 @@ data/
   mock_jira_tasks.json
 docs/
   llm_classifier_contract.md
+  outlook_adapter_plan.md
 tests/
   test_actions.py
   test_adapters.py
@@ -98,9 +99,11 @@ tests/
   test_config.py
   test_classifier.py
   test_llm_contract.py
+  test_outlook_plan_fixture.py
   test_review.py
   test_run_history.py
   fixtures/
+    sample_outlook_briefing_item.json
     sample_llm_classifier_input.json
     sample_valid_llm_classifier_output.json
     sample_invalid_llm_classifier_output.json
@@ -191,6 +194,12 @@ adapter should use Microsoft Graph read-only permissions, such as mail read
 access only, and should not send, archive, delete, label, or modify messages.
 OAuth, credentials, and real network calls are intentionally out of scope for
 this local mock version.
+
+The future Outlook read-only adapter plan is documented in
+`docs/outlook_adapter_plan.md`. It explains where an Outlook adapter would fit,
+how Outlook messages should map into `BriefingItem`, what fields are needed,
+proposed future config ideas, and the safety requirements for work email. The
+plan is documentation only; `outlook_email` is not an active source today.
 
 ## Local Configuration
 
