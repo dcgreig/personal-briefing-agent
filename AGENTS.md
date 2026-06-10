@@ -29,3 +29,13 @@ Run tests:
 ```bash
 python -m pytest
 ```
+
+## Git workflow
+
+- Make one commit per completed milestone.
+- Before committing, run:
+  - python -m pytest
+  - python -m briefing_agent.cli when relevant
+- Use clear, short commit messages.
+- Do not rewrite git history unless explicitly asked.
+- Do not commit secrets, credentials, tokens, or local environment files.
