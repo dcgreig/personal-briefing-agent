@@ -1,5 +1,6 @@
 enabled_sources = ["mock_email", "mock_jira"]
 require_human_review = true
 audit_log_path = "logs/audit.jsonl"
+run_history_path = "logs/run_history.jsonl"
 briefing_output_path = "logs/daily_briefing.md"
 lookback_hours = 24

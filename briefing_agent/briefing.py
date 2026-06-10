@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from briefing_agent.models import Category, Classification
 
@@ -17,9 +17,19 @@ CATEGORY_LABELS: dict[Category, str] = {
 }
 
 
-def build_briefing(classifications: list[Classification]) -> str:
+def build_briefing(
+    classifications: list[Classification],
+    run_id: str,
+    generated_at: datetime,
+) -> str:
     """Build a human-readable briefing grouped by classification category."""
-    lines = ["Daily Briefing", "==============", ""]
+    lines = [
+        "Daily Briefing",
+        "==============",
+        f"Run ID: {run_id}",
+        f"Generated: {generated_at.isoformat()}",
+        "",
+    ]
 
     for category in CATEGORY_ORDER:
         items = [
@@ -45,12 +55,14 @@ def build_briefing(classifications: list[Classification]) -> str:
 
 def build_markdown_briefing(
     classifications: list[Classification],
-    generated_at: datetime | None = None,
+    run_id: str,
+    generated_at: datetime,
 ) -> str:
     """Build a Markdown briefing for saving to disk."""
-    generated_at = generated_at or datetime.now(timezone.utc)
     lines = [
         "# Daily Briefing",
+        "",
+        f"Run ID: {run_id}",
         "",
         f"Generated: {generated_at.isoformat()}",
         "",
@@ -58,7 +70,7 @@ def build_markdown_briefing(
         "",
     ]
 
-    counts = _category_counts(classifications)
+    counts = category_counts(classifications)
     for category in CATEGORY_ORDER:
         lines.append(f"- {CATEGORY_LABELS[category]}: {counts[category]}")
 
@@ -90,7 +102,8 @@ def build_markdown_briefing(
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _category_counts(classifications: list[Classification]) -> dict[Category, int]:
+def category_counts(classifications: list[Classification]) -> dict[Category, int]:
+    """Count classifications by category."""
     return {
         category: sum(
             1

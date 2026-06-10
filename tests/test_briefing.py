@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import unittest
 
-from briefing_agent.briefing import build_markdown_briefing
+from briefing_agent.briefing import build_briefing, build_markdown_briefing
 from briefing_agent.models import Classification
 
 
@@ -43,9 +43,14 @@ class MarkdownBriefingTests(unittest.TestCase):
         ]
         generated_at = datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc)
 
-        markdown = build_markdown_briefing(classifications, generated_at)
+        markdown = build_markdown_briefing(
+            classifications,
+            run_id="run-123",
+            generated_at=generated_at,
+        )
 
         self.assertIn("# Daily Briefing", markdown)
+        self.assertIn("Run ID: run-123", markdown)
         self.assertIn("Generated: 2026-06-10T12:00:00+00:00", markdown)
         self.assertIn("## Summary Counts", markdown)
         self.assertIn("- Urgent: 1", markdown)
@@ -61,6 +66,25 @@ class MarkdownBriefingTests(unittest.TestCase):
         self.assertIn("- Type: email", markdown)
         self.assertIn("- Classification: urgent", markdown)
         self.assertIn("- Reason: The email is urgent.", markdown)
+
+    def test_terminal_briefing_contains_run_id(self):
+        generated_at = datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc)
+
+        briefing = build_briefing(
+            [_classification(
+                item_id="email-001",
+                source_type="email",
+                source_name="mock_email",
+                title="Urgent email",
+                category="urgent",
+                reason="The email is urgent.",
+            )],
+            run_id="run-123",
+            generated_at=generated_at,
+        )
+
+        self.assertIn("Run ID: run-123", briefing)
+        self.assertIn("Generated: 2026-06-10T12:00:00+00:00", briefing)
 
 
 def _classification(

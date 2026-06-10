@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 from briefing_agent.audit import append_audit_log
@@ -41,7 +42,12 @@ class AuditLogTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             audit_path = Path(temp_dir) / "audit.jsonl"
 
-            append_audit_log(reviewed_items, audit_path)
+            append_audit_log(
+                reviewed_items,
+                audit_path,
+                run_id="run-123",
+                generated_at=datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc),
+            )
 
             records = [
                 json.loads(line)
@@ -61,6 +67,8 @@ class AuditLogTests(unittest.TestCase):
         )
         self.assertEqual(records[1]["final_classification"]["category"], "fyi")
         self.assertTrue(records[1]["changed"])
+        self.assertEqual(records[0]["run_id"], "run-123")
+        self.assertEqual(records[1]["run_id"], "run-123")
         self.assertIn("timestamp", records[0])
 
 

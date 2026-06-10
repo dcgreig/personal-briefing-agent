@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from briefing_agent.adapters import (
     MockEmailAdapter,
@@ -15,6 +17,7 @@ from briefing_agent.briefing import build_briefing, build_markdown_briefing
 from briefing_agent.classifier import classify_all
 from briefing_agent.config import Settings, load_settings
 from briefing_agent.review import accept_all_classifications, review_classifications
+from briefing_agent.run_history import append_run_history
 
 
 SOURCE_ADAPTERS = {
@@ -45,13 +48,19 @@ def main() -> None:
     )
     args = parser.parse_args()
     settings = load_settings(args.config)
+    run_id = uuid4().hex
+    generated_at = datetime.now(timezone.utc)
     audit_log_path = args.audit_log or settings.audit_log_path
 
     adapters = build_source_adapters(settings, args.data_dir)
     items = load_items_from_adapters(adapters)
     classifications = classify_all(items)
-    briefing = build_briefing(classifications)
-    markdown_briefing = build_markdown_briefing(classifications)
+    briefing = build_briefing(classifications, run_id, generated_at)
+    markdown_briefing = build_markdown_briefing(
+        classifications,
+        run_id,
+        generated_at,
+    )
 
     print(briefing)
     write_briefing_output(markdown_briefing, settings.briefing_output_path)
@@ -62,8 +71,18 @@ def main() -> None:
         reviewed_items = accept_all_classifications(classifications)
         print("\nHuman review skipped by config.")
 
-    append_audit_log(reviewed_items, audit_log_path)
+    append_audit_log(reviewed_items, audit_log_path, run_id, generated_at)
+    append_run_history(
+        settings.run_history_path,
+        run_id,
+        generated_at,
+        settings.enabled_sources,
+        classifications,
+        settings.briefing_output_path,
+        audit_log_path,
+    )
     print(f"\nAudit log written to {audit_log_path}")
+    print(f"Run history written to {settings.run_history_path}")
     if settings.briefing_output_path is not None:
         print(f"Briefing output written to {settings.briefing_output_path}")
 

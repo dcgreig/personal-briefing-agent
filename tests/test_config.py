@@ -21,6 +21,7 @@ class ConfigTests(unittest.TestCase):
                         'enabled_sources = ["mock_email"]',
                         "require_human_review = false",
                         'audit_log_path = "tmp/audit.jsonl"',
+                        'run_history_path = "tmp/run_history.jsonl"',
                         'briefing_output_path = "tmp/briefing.txt"',
                         "lookback_hours = 12",
                     ]
@@ -33,6 +34,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(settings.enabled_sources, ("mock_email",))
         self.assertFalse(settings.require_human_review)
         self.assertEqual(settings.audit_log_path, Path("tmp/audit.jsonl"))
+        self.assertEqual(settings.run_history_path, Path("tmp/run_history.jsonl"))
         self.assertEqual(settings.briefing_output_path, Path("tmp/briefing.txt"))
         self.assertEqual(settings.lookback_hours, 12)
 
@@ -40,6 +42,12 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(
             DEFAULT_SETTINGS.briefing_output_path,
             Path("logs/daily_briefing.md"),
+        )
+
+    def test_default_run_history_path_is_jsonl(self):
+        self.assertEqual(
+            DEFAULT_SETTINGS.run_history_path,
+            Path("logs/run_history.jsonl"),
         )
 
     def test_empty_briefing_output_path_disables_file_output(self):

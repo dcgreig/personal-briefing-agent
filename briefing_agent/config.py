@@ -17,6 +17,7 @@ class Settings:
     enabled_sources: tuple[str, ...]
     require_human_review: bool
     audit_log_path: Path
+    run_history_path: Path
     briefing_output_path: Path | None
     lookback_hours: int
 
@@ -25,6 +26,7 @@ DEFAULT_SETTINGS = Settings(
     enabled_sources=("mock_email", "mock_jira"),
     require_human_review=True,
     audit_log_path=Path("logs/audit.jsonl"),
+    run_history_path=Path("logs/run_history.jsonl"),
     briefing_output_path=Path("logs/daily_briefing.md"),
     lookback_hours=24,
 )
@@ -40,6 +42,7 @@ def load_settings(path: Path = Path("config/settings.toml")) -> Settings:
         enabled_sources=_read_enabled_sources(data),
         require_human_review=_read_bool(data, "require_human_review"),
         audit_log_path=_read_path(data, "audit_log_path"),
+        run_history_path=_read_path(data, "run_history_path"),
         briefing_output_path=_read_optional_path(data, "briefing_output_path"),
         lookback_hours=_read_positive_int(data, "lookback_hours"),
     )
