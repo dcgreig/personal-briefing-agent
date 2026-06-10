@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from briefing_agent.models import ClassifierMode
+
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - used only on Python 3.10
@@ -15,6 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - used only on Python 3.10
 @dataclass(frozen=True)
 class Settings:
     enabled_sources: tuple[str, ...]
+    classifier_mode: ClassifierMode
     require_human_review: bool
     audit_log_path: Path
     run_history_path: Path
@@ -24,6 +27,7 @@ class Settings:
 
 DEFAULT_SETTINGS = Settings(
     enabled_sources=("mock_email", "mock_jira"),
+    classifier_mode="rule_based",
     require_human_review=True,
     audit_log_path=Path("logs/audit.jsonl"),
     run_history_path=Path("logs/run_history.jsonl"),
@@ -40,6 +44,7 @@ def load_settings(path: Path = Path("config/settings.toml")) -> Settings:
     data = _load_toml(path)
     return Settings(
         enabled_sources=_read_enabled_sources(data),
+        classifier_mode=_read_classifier_mode(data),
         require_human_review=_read_bool(data, "require_human_review"),
         audit_log_path=_read_path(data, "audit_log_path"),
         run_history_path=_read_path(data, "run_history_path"),
@@ -62,6 +67,15 @@ def _read_enabled_sources(data: dict[str, Any]) -> tuple[str, ...]:
     ):
         raise ValueError("enabled_sources must be a list of source names")
     return tuple(value)
+
+
+def _read_classifier_mode(data: dict[str, Any]) -> ClassifierMode:
+    value = data.get("classifier_mode", DEFAULT_SETTINGS.classifier_mode)
+    if value not in {"rule_based", "llm_assisted"}:
+        raise ValueError(
+            "classifier_mode must be one of: rule_based, llm_assisted"
+        )
+    return value
 
 
 def _read_bool(data: dict[str, Any], key: str) -> bool:

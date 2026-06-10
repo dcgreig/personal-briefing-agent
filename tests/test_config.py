@@ -19,6 +19,7 @@ class ConfigTests(unittest.TestCase):
                 "\n".join(
                     [
                         'enabled_sources = ["mock_email"]',
+                        'classifier_mode = "llm_assisted"',
                         "require_human_review = false",
                         'audit_log_path = "tmp/audit.jsonl"',
                         'run_history_path = "tmp/run_history.jsonl"',
@@ -32,6 +33,7 @@ class ConfigTests(unittest.TestCase):
             settings = load_settings(settings_path)
 
         self.assertEqual(settings.enabled_sources, ("mock_email",))
+        self.assertEqual(settings.classifier_mode, "llm_assisted")
         self.assertFalse(settings.require_human_review)
         self.assertEqual(settings.audit_log_path, Path("tmp/audit.jsonl"))
         self.assertEqual(settings.run_history_path, Path("tmp/run_history.jsonl"))
@@ -49,6 +51,9 @@ class ConfigTests(unittest.TestCase):
             DEFAULT_SETTINGS.run_history_path,
             Path("logs/run_history.jsonl"),
         )
+
+    def test_default_classifier_mode_is_rule_based(self):
+        self.assertEqual(DEFAULT_SETTINGS.classifier_mode, "rule_based")
 
     def test_empty_briefing_output_path_disables_file_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -76,6 +81,17 @@ class ConfigTests(unittest.TestCase):
             settings_path.write_text("lookback_hours = 0", encoding="utf-8")
 
             with self.assertRaises(ValueError):
+                load_settings(settings_path)
+
+    def test_invalid_classifier_mode_raises_clear_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.toml"
+            settings_path.write_text(
+                'classifier_mode = "mystery_classifier"',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "classifier_mode"):
                 load_settings(settings_path)
 
 

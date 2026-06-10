@@ -1,11 +1,51 @@
 from datetime import date
 import unittest
 
-from briefing_agent.classifier import classify_item
+from briefing_agent.classifier import (
+    LLM_ASSISTED_NOT_IMPLEMENTED_MESSAGE,
+    LlmAssistedClassifier,
+    RuleBasedClassifier,
+    build_classifier,
+    classify_item,
+)
 from briefing_agent.models import BriefingItem
 
 
 class ClassifierTests(unittest.TestCase):
+    def test_build_rule_based_classifier_mode(self):
+        classifier = build_classifier("rule_based")
+
+        self.assertIsInstance(classifier, RuleBasedClassifier)
+
+    def test_rule_based_classifier_classifies_items(self):
+        classifier = RuleBasedClassifier()
+        item = _email_item(
+            item_id="email-test-rule-based",
+            title="Review request",
+            body="Can you review this before Friday?",
+        )
+
+        result = classifier.classify_item(item)
+
+        self.assertEqual(result.category, "waiting_on_me")
+
+    def test_llm_assisted_classifier_mode_fails_safely(self):
+        classifier = build_classifier("llm_assisted")
+        item = _email_item(
+            item_id="email-test-llm",
+            title="Review request",
+            body="Can you review this before Friday?",
+        )
+
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "scaffolded but not implemented",
+        ):
+            classifier.classify_item(item)
+
+        self.assertIsInstance(classifier, LlmAssistedClassifier)
+        self.assertIn("rule_based", LLM_ASSISTED_NOT_IMPLEMENTED_MESSAGE)
+
     def test_high_importance_email_is_urgent(self):
         item = _email_item(
             item_id="email-test-1",

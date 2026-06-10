@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Protocol
 
-from briefing_agent.models import BriefingItem, Classification
+from briefing_agent.models import BriefingItem, ClassifierMode, Classification
 
 
 ME = "me"
@@ -42,20 +43,79 @@ IGNORE_KEYWORDS = (
 )
 
 
+class Classifier(Protocol):
+    """Interface for briefing item classifiers."""
+
+    def classify_item(
+        self,
+        item: BriefingItem,
+        today: date | None = None,
+    ) -> Classification:
+        """Classify one normalized briefing item."""
+
+    def classify_all(self, items: list[BriefingItem]) -> list[Classification]:
+        """Classify every normalized briefing item."""
+
+
+class RuleBasedClassifier:
+    """Deterministic classifier using local rules only."""
+
+    def classify_item(
+        self,
+        item: BriefingItem,
+        today: date | None = None,
+    ) -> Classification:
+        if item.source_type == "email":
+            return _classify_email_item(item)
+
+        if item.source_type == "jira":
+            return _classify_jira_item(item, today=today)
+
+        raise ValueError(f"Unsupported source type: {item.source_type}")
+
+    def classify_all(self, items: list[BriefingItem]) -> list[Classification]:
+        return [self.classify_item(item) for item in items]
+
+
+class LlmAssistedClassifier:
+    """Placeholder for a future LLM-assisted classifier."""
+
+    def classify_item(
+        self,
+        item: BriefingItem,
+        today: date | None = None,
+    ) -> Classification:
+        raise NotImplementedError(LLM_ASSISTED_NOT_IMPLEMENTED_MESSAGE)
+
+    def classify_all(self, items: list[BriefingItem]) -> list[Classification]:
+        raise NotImplementedError(LLM_ASSISTED_NOT_IMPLEMENTED_MESSAGE)
+
+
+LLM_ASSISTED_NOT_IMPLEMENTED_MESSAGE = (
+    "LLM-assisted classification is scaffolded but not implemented. "
+    "Use classifier_mode = \"rule_based\" to run the local deterministic classifier."
+)
+
+
+def build_classifier(mode: ClassifierMode) -> Classifier:
+    """Build the configured classifier implementation."""
+    if mode == "rule_based":
+        return RuleBasedClassifier()
+
+    if mode == "llm_assisted":
+        return LlmAssistedClassifier()
+
+    raise ValueError("classifier_mode must be one of: rule_based, llm_assisted")
+
+
 def classify_item(item: BriefingItem, today: date | None = None) -> Classification:
-    """Classify one normalized briefing item."""
-    if item.source_type == "email":
-        return _classify_email_item(item)
-
-    if item.source_type == "jira":
-        return _classify_jira_item(item, today=today)
-
-    raise ValueError(f"Unsupported source type: {item.source_type}")
+    """Classify one item with the default local rule-based classifier."""
+    return RuleBasedClassifier().classify_item(item, today=today)
 
 
 def classify_all(items: list[BriefingItem]) -> list[Classification]:
-    """Classify every normalized briefing item."""
-    return [classify_item(item) for item in items]
+    """Classify every item with the default local rule-based classifier."""
+    return RuleBasedClassifier().classify_all(items)
 
 
 def _classify_email_item(item: BriefingItem) -> Classification:

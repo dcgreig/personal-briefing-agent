@@ -9,6 +9,7 @@ from typing import Literal
 Category = Literal["urgent", "waiting_on_me", "fyi", "ignore"]
 SourceType = Literal["email", "jira"]
 ActionType = Literal["no_action", "review", "reply", "follow_up", "update_task"]
+ClassifierMode = Literal["rule_based", "llm_assisted"]
 
 
 @dataclass(frozen=True)

@@ -77,7 +77,7 @@ briefing_agent/
   adapters.py     # local source adapters that produce BriefingItem objects
   audit.py        # JSONL audit log writer
   briefing.py     # terminal briefing formatting
-  classifier.py   # simple classification heuristics over BriefingItem
+  classifier.py   # classifier interface plus rule-based implementation
   cli.py          # python -m entry point
   config.py       # local TOML settings loader
   models.py       # dataclasses used across the app
@@ -127,6 +127,20 @@ The rules live in `briefing_agent/classifier.py`. They are deliberately written
 as readable Python conditionals so someone learning agentic development can see
 exactly why the agent made each decision.
 
+## Classifier Modes
+
+The project has a classifier interface so multiple classifier implementations
+can exist later. The supported config values are:
+
+- `rule_based`: the default deterministic local classifier.
+- `llm_assisted`: a scaffolded placeholder that fails safely because no LLM implementation exists yet.
+
+`rule_based` remains the default because it is predictable, testable, local-only,
+and does not require network calls, model calls, API keys, prompts, or secrets.
+If `classifier_mode` is set to `llm_assisted`, the CLI stops with a clear
+message explaining that LLM-assisted classification is scaffolded but not
+implemented.
+
 ## Dry-Run Action Suggestions
 
 After classification and human review, the agent suggests one possible next
@@ -168,6 +182,7 @@ Settings live in `config/settings.toml`:
 
 ```toml
 enabled_sources = ["mock_email", "mock_jira"]
+classifier_mode = "rule_based"
 require_human_review = true
 audit_log_path = "logs/audit.jsonl"
 run_history_path = "logs/run_history.jsonl"
@@ -180,6 +195,7 @@ If the file is missing, the app uses those same defaults.
 The fields mean:
 
 - `enabled_sources`: which local adapters to run. Supported values are `mock_email` and `mock_jira`.
+- `classifier_mode`: which classifier to use. Supported values are `rule_based` and `llm_assisted`.
 - `require_human_review`: when `true`, the CLI asks you to approve or override each classification.
 - `audit_log_path`: where JSONL audit records are appended.
 - `run_history_path`: where one JSONL record per CLI execution is appended.

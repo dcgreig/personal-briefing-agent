@@ -19,7 +19,7 @@ from briefing_agent.briefing import (
     build_briefing,
     build_markdown_briefing,
 )
-from briefing_agent.classifier import classify_all
+from briefing_agent.classifier import build_classifier
 from briefing_agent.config import Settings, load_settings
 from briefing_agent.review import (
     accept_all_classifications,
@@ -63,7 +63,11 @@ def main() -> None:
 
     adapters = build_source_adapters(settings, args.data_dir)
     items = load_items_from_adapters(adapters)
-    classifications = classify_all(items)
+    classifier = build_classifier(settings.classifier_mode)
+    try:
+        classifications = classifier.classify_all(items)
+    except NotImplementedError as error:
+        raise SystemExit(str(error)) from error
     briefing = build_briefing(classifications, run_id, generated_at)
 
     print(briefing)
