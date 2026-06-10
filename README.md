@@ -19,10 +19,29 @@ Normal interactive run:
 python -m briefing_agent.cli
 ```
 
+Explicit run subcommand:
+
+```powershell
+python -m briefing_agent.cli run
+```
+
 Non-interactive run for tests or automation:
 
 ```powershell
 python -m briefing_agent.cli --no-review
+python -m briefing_agent.cli run --no-review
+```
+
+Show recent briefing runs:
+
+```powershell
+python -m briefing_agent.cli history
+```
+
+Show details for one run:
+
+```powershell
+python -m briefing_agent.cli show-run <run_id>
 ```
 
 The CLI loads:
@@ -267,3 +286,11 @@ You can still override the audit path for a single run:
 ```powershell
 python -m briefing_agent.cli --audit-log logs/test_audit.jsonl
 ```
+
+The CLI also has local history commands:
+
+- `python -m briefing_agent.cli history` reads the configured `run_history_path` and prints recent runs.
+- `python -m briefing_agent.cli show-run <run_id>` prints details for one run.
+
+If the run history file does not exist yet, or a requested run id is not found,
+the CLI prints a friendly message and does not perform any external action.

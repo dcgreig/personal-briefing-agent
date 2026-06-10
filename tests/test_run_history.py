@@ -5,7 +5,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from briefing_agent.models import Classification
-from briefing_agent.run_history import append_run_history
+from briefing_agent.run_history import (
+    append_run_history,
+    build_history_report,
+    build_run_report,
+    find_run,
+    load_run_history,
+)
 
 
 class RunHistoryTests(unittest.TestCase):
@@ -50,6 +56,58 @@ class RunHistoryTests(unittest.TestCase):
         )
         self.assertEqual(records[0]["audit_log_path"], "logs\\audit.jsonl")
 
+    def test_load_run_history_reads_jsonl_records(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            history_path = Path(temp_dir) / "run_history.jsonl"
+            history_path.write_text(
+                "\n".join(
+                    [
+                        '{"run_id": "run-1", "total_item_count": 1}',
+                        "",
+                        '{"run_id": "run-2", "total_item_count": 2}',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            records = load_run_history(history_path)
+
+        self.assertEqual([record["run_id"] for record in records], ["run-1", "run-2"])
+
+    def test_find_run_returns_matching_record(self):
+        records = [{"run_id": "run-1"}, {"run_id": "run-2"}]
+
+        record = find_run(records, "run-2")
+
+        self.assertEqual(record, {"run_id": "run-2"})
+        self.assertIsNone(find_run(records, "missing"))
+
+    def test_build_history_report_shows_recent_runs(self):
+        report = build_history_report(
+            [
+                _history_record("old-run"),
+                _history_record("new-run"),
+            ],
+            limit=1,
+        )
+
+        self.assertIn("Briefing Run History", report)
+        self.assertIn("Run ID: new-run", report)
+        self.assertNotIn("Run ID: old-run", report)
+        self.assertIn("Counts: urgent=1, waiting_on_me=2, fyi=3, ignore=4", report)
+
+    def test_build_history_report_handles_empty_history(self):
+        report = build_history_report([])
+
+        self.assertIn("No briefing runs found yet.", report)
+
+    def test_build_run_report_shows_single_run_details(self):
+        report = build_run_report(_history_record("run-123"))
+
+        self.assertIn("Briefing Run", report)
+        self.assertIn("Run ID: run-123", report)
+        self.assertIn("Audit log: logs/audit.jsonl", report)
+
 
 def _classification(
     item_id: str,
@@ -66,6 +124,23 @@ def _classification(
         summary="A short summary.",
         reason="A short reason.",
     )
+
+
+def _history_record(run_id: str) -> dict:
+    return {
+        "run_id": run_id,
+        "generated_at": "2026-06-10T12:00:00+00:00",
+        "enabled_sources": ["mock_email", "mock_jira"],
+        "total_item_count": 10,
+        "counts_by_classification": {
+            "urgent": 1,
+            "waiting_on_me": 2,
+            "fyi": 3,
+            "ignore": 4,
+        },
+        "briefing_output_path": "logs/daily_briefing.md",
+        "audit_log_path": "logs/audit.jsonl",
+    }
 
 
 if __name__ == "__main__":
