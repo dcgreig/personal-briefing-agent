@@ -1,0 +1,18 @@
+{
+  "item_id": "jira-issue-10001",
+  "source_type": "jira",
+  "source_name": "jira_tasks",
+  "title": "PBA-201: Review classifier copy",
+  "body": "Tighten the wording for classification reasons.",
+  "metadata": {
+    "key": "PBA-201",
+    "assignee": "me",
+    "assignee_display_name": "David",
+    "reporter": "Priya",
+    "status": "To Do",
+    "priority": "Medium",
+    "due_date": "2026-06-14",
+    "updated_at": "2026-06-10T09:00:00-04:00",
+    "issue_type": "Task"
+  }
+}

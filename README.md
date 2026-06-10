@@ -90,6 +90,7 @@ data/
   mock_emails.json
   mock_jira_tasks.json
 docs/
+  jira_adapter_plan.md
   llm_classifier_contract.md
   outlook_adapter_plan.md
 tests/
@@ -98,11 +99,13 @@ tests/
   test_audit.py
   test_config.py
   test_classifier.py
+  test_jira_plan_fixture.py
   test_llm_contract.py
   test_outlook_plan_fixture.py
   test_review.py
   test_run_history.py
   fixtures/
+    sample_jira_briefing_item.json
     sample_outlook_briefing_item.json
     sample_llm_classifier_input.json
     sample_valid_llm_classifier_output.json
@@ -200,6 +203,12 @@ The future Outlook read-only adapter plan is documented in
 how Outlook messages should map into `BriefingItem`, what fields are needed,
 proposed future config ideas, and the safety requirements for work email. The
 plan is documentation only; `outlook_email` is not an active source today.
+
+The future Jira read-only adapter plan is documented in
+`docs/jira_adapter_plan.md`. It explains where a Jira adapter would fit, how
+Jira issues should map into `BriefingItem`, what fields are needed, proposed
+future config ideas, and the safety requirements for work tasks. The plan is
+documentation only; `jira_tasks` is not an active source today.
 
 ## Local Configuration
 
