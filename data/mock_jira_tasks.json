@@ -1,0 +1,46 @@
+[
+  {
+    "id": "jira-001",
+    "key": "PBA-101",
+    "title": "Fix blocked briefing export",
+    "description": "The export job is blocked on a serialization error.",
+    "assignee": "me",
+    "reporter": "alex",
+    "status": "In Progress",
+    "priority": "High",
+    "due_date": "2026-06-09"
+  },
+  {
+    "id": "jira-002",
+    "key": "PBA-102",
+    "title": "Review classifier copy",
+    "description": "Tighten the wording for classification reasons.",
+    "assignee": "me",
+    "reporter": "priya",
+    "status": "To Do",
+    "priority": "Medium",
+    "due_date": "2026-06-14"
+  },
+  {
+    "id": "jira-003",
+    "key": "PBA-103",
+    "title": "Document future Jira integration",
+    "description": "Add notes for a later real API integration.",
+    "assignee": "sam",
+    "reporter": "me",
+    "status": "In Progress",
+    "priority": "Low",
+    "due_date": "2026-06-20"
+  },
+  {
+    "id": "jira-004",
+    "key": "PBA-104",
+    "title": "Remove old prototype flag",
+    "description": "Cleanup task completed last sprint.",
+    "assignee": "me",
+    "reporter": "sam",
+    "status": "Done",
+    "priority": "Low",
+    "due_date": null
+  }
+]

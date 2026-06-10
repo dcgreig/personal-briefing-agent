@@ -1,0 +1,34 @@
+[
+  {
+    "id": "email-001",
+    "sender": "alex@example.com",
+    "subject": "Urgent: production deploy is blocked",
+    "body": "The production deploy is blocked and we need help today.",
+    "received_at": "2026-06-09T08:15:00-04:00",
+    "importance": "high"
+  },
+  {
+    "id": "email-002",
+    "sender": "priya@example.com",
+    "subject": "Can you review the launch copy?",
+    "body": "Please review the draft and send feedback when you can.",
+    "received_at": "2026-06-09T09:20:00-04:00",
+    "importance": "normal"
+  },
+  {
+    "id": "email-003",
+    "sender": "team@example.com",
+    "subject": "Weekly product update",
+    "body": "Sharing the latest product metrics and customer notes for visibility.",
+    "received_at": "2026-06-09T07:30:00-04:00",
+    "importance": "normal"
+  },
+  {
+    "id": "email-004",
+    "sender": "newsletter@vendor.example",
+    "subject": "June newsletter and product tips",
+    "body": "You are receiving this newsletter because you subscribed. Unsubscribe anytime.",
+    "received_at": "2026-06-09T06:45:00-04:00",
+    "importance": "low"
+  }
+]
