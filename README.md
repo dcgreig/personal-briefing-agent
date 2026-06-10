@@ -80,6 +80,7 @@ briefing_agent/
   classifier.py   # classifier interface plus rule-based implementation
   cli.py          # python -m entry point
   config.py       # local TOML settings loader
+  llm_contract.py # local validation helpers for future LLM output
   models.py       # dataclasses used across the app
   review.py       # local human review prompts
   run_history.py  # JSONL run history writer
@@ -88,14 +89,21 @@ config/
 data/
   mock_emails.json
   mock_jira_tasks.json
+docs/
+  llm_classifier_contract.md
 tests/
   test_actions.py
   test_adapters.py
   test_audit.py
   test_config.py
   test_classifier.py
+  test_llm_contract.py
   test_review.py
   test_run_history.py
+  fixtures/
+    sample_llm_classifier_input.json
+    sample_valid_llm_classifier_output.json
+    sample_invalid_llm_classifier_output.json
 logs/
   audit.jsonl          # generated when the CLI runs
   daily_briefing.md    # generated when the CLI runs
@@ -140,6 +148,14 @@ and does not require network calls, model calls, API keys, prompts, or secrets.
 If `classifier_mode` is set to `llm_assisted`, the CLI stops with a clear
 message explaining that LLM-assisted classification is scaffolded but not
 implemented.
+
+The future LLM classifier contract is documented in
+`docs/llm_classifier_contract.md`. It describes the intended input shape, output
+shape, allowed classifications, rationale and confidence requirements,
+uncertainty handling, safety constraints, and fallback behavior. The repo also
+includes JSON fixtures and local validation tests for that contract. These are
+contract tests only; they do not execute prompts, model calls, SDK calls, or
+network requests.
 
 ## Dry-Run Action Suggestions
 

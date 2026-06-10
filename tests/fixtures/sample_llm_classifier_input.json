@@ -1,0 +1,25 @@
+{
+  "run_id": "example-run-001",
+  "item": {
+    "item_id": "email-002",
+    "source_type": "email",
+    "source_name": "mock_email",
+    "title": "Can you review the launch copy?",
+    "body": "Please review the draft and send feedback when you can.",
+    "metadata": {
+      "sender": "priya@example.com",
+      "received_at": "2026-06-09T09:20:00-04:00",
+      "importance": "normal"
+    }
+  },
+  "allowed_classifications": [
+    "urgent",
+    "waiting_on_me",
+    "fyi",
+    "ignore"
+  ],
+  "safety": {
+    "dry_run_only": true,
+    "no_external_actions": true
+  }
+}

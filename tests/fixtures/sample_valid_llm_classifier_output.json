@@ -1,0 +1,7 @@
+{
+  "item_id": "email-002",
+  "classification": "waiting_on_me",
+  "rationale": "The item directly asks for review and feedback.",
+  "confidence": 0.87,
+  "uncertainty": "low"
+}
