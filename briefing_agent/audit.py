@@ -36,6 +36,7 @@ def append_audit_log(
                 "run_id": run_id,
                 "timestamp": timestamp,
                 "changed": reviewed_item.changed,
+                "skipped": reviewed_item.skipped,
                 "original_classification": original,
                 "final_classification": final,
                 "suggested_action": asdict(suggestion),

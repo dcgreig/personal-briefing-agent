@@ -77,12 +77,14 @@ class AuditLogTests(unittest.TestCase):
         )
         self.assertEqual(records[0]["final_classification"]["category"], "urgent")
         self.assertFalse(records[0]["changed"])
+        self.assertFalse(records[0]["skipped"])
         self.assertEqual(
             records[1]["original_classification"]["category"],
             "waiting_on_me",
         )
         self.assertEqual(records[1]["final_classification"]["category"], "fyi")
         self.assertTrue(records[1]["changed"])
+        self.assertFalse(records[1]["skipped"])
         self.assertEqual(records[0]["run_id"], "run-123")
         self.assertEqual(records[1]["run_id"], "run-123")
         self.assertEqual(records[0]["suggested_action"]["action_type"], "reply")

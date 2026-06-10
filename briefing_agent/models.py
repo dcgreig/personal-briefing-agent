@@ -38,6 +38,7 @@ class ReviewDecision:
     original: Classification
     final_category: Category
     changed: bool
+    skipped: bool = False
 
 
 @dataclass(frozen=True)

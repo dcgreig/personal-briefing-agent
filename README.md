@@ -13,8 +13,16 @@ This project is intentionally local-only:
 
 ## Quick Start
 
+Normal interactive run:
+
 ```powershell
 python -m briefing_agent.cli
+```
+
+Non-interactive run for tests or automation:
+
+```powershell
+python -m briefing_agent.cli --no-review
 ```
 
 The CLI loads:
@@ -35,18 +43,27 @@ It also writes the latest briefing to a Markdown file:
 
 - `logs/daily_briefing.md`
 
-After the briefing is printed, the CLI shows each classified item one at a time.
-Press Enter to accept the suggested classification, or type one of these
-categories to override it:
+In a normal interactive run, the CLI prints the Daily Briefing, then shows each
+classified item one at a time with its source, type, title, classification,
+reason, suggested dry-run action, and action rationale. Press Enter to accept
+the suggested classification, use a shortcut, or type one of these categories to
+override it:
 
 - `urgent`
 - `waiting_on_me`
 - `fyi`
 - `ignore`
 
+You can also type `skip` to keep the current classification and mark the item as
+skipped for now. After all items are reviewed, the CLI shows a final confirmation
+summary before writing the audit log, run history, and Markdown briefing.
+
+Use `--no-review` to skip prompts and accept all classifications for that run.
+This is useful for tests and automation, and still stays local-only.
+
 The audit log records the original classification, your final classification,
-whether you changed it, the dry-run suggested action, and the `run_id` for the
-CLI execution.
+whether you changed it, whether you skipped it for now, the dry-run suggested
+action, and the `run_id` for the CLI execution.
 
 The Markdown briefing includes:
 
@@ -124,11 +141,15 @@ logs/
 4. Run the classifier over those normalized `BriefingItem` objects.
 5. Build a short summary and reason for each item.
 6. Print a grouped "Daily Briefing" to the terminal.
-7. Save the briefing as Markdown if `briefing_output_path` is configured.
-8. Ask you to accept or override each classification if `require_human_review` is true.
+7. Ask you to accept, override, or skip each classification if review is enabled.
+8. Show a final confirmation summary before writing local output files.
 9. Generate one deterministic dry-run action suggestion for each finalized item.
-10. Append one JSON object per reviewed item to the configured audit log.
-11. Append one JSON object for the whole run to the configured run history log.
+10. Save the briefing as Markdown if `briefing_output_path` is configured.
+11. Append one JSON object per reviewed item to the configured audit log.
+12. Append one JSON object for the whole run to the configured run history log.
+
+When `--no-review` is used, the CLI accepts all classifications and skips the
+interactive prompts and final confirmation.
 
 The classifier returns one of four categories:
 
@@ -230,7 +251,7 @@ The fields mean:
 
 - `enabled_sources`: which local adapters to run. Supported values are `mock_email` and `mock_jira`.
 - `classifier_mode`: which classifier to use. Supported values are `rule_based` and `llm_assisted`.
-- `require_human_review`: when `true`, the CLI asks you to approve or override each classification.
+- `require_human_review`: when `true`, the CLI asks you to approve or override each classification. Use `--no-review` to skip prompts for a single run.
 - `audit_log_path`: where JSONL audit records are appended.
 - `run_history_path`: where one JSONL record per CLI execution is appended.
 - `briefing_output_path`: where the latest Markdown briefing is saved. Set it to an empty string to skip file output.

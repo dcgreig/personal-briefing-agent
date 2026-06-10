@@ -23,6 +23,7 @@ from briefing_agent.classifier import build_classifier
 from briefing_agent.config import Settings, load_settings
 from briefing_agent.review import (
     accept_all_classifications,
+    confirm_review,
     finalized_classifications,
     review_classifications,
 )
@@ -55,6 +56,11 @@ def main() -> None:
         default=None,
         help="Override the JSONL audit log path from settings.",
     )
+    parser.add_argument(
+        "--no-review",
+        action="store_true",
+        help="Skip interactive review and accept all classifications.",
+    )
     args = parser.parse_args()
     settings = load_settings(args.config)
     run_id = uuid4().hex
@@ -72,11 +78,14 @@ def main() -> None:
 
     print(briefing)
 
-    if settings.require_human_review:
+    if settings.require_human_review and not args.no_review:
         reviewed_items = review_classifications(classifications)
+        if not confirm_review(reviewed_items):
+            print("\nRun cancelled before writing outputs.")
+            return
     else:
         reviewed_items = accept_all_classifications(classifications)
-        print("\nHuman review skipped by config.")
+        print("\nHuman review skipped by config or --no-review.")
 
     final_classifications = finalized_classifications(reviewed_items)
     action_suggestions = suggest_actions(reviewed_items)
