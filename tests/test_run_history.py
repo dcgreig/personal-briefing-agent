@@ -4,6 +4,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
+from briefing_agent.filters import FilterSettings
 from briefing_agent.models import Classification
 from briefing_agent.run_history import (
     append_run_history,
@@ -34,6 +35,10 @@ class RunHistoryTests(unittest.TestCase):
                 classifications=classifications,
                 briefing_output_path=Path("logs/daily_briefing.md"),
                 audit_log_path=Path("logs/audit.jsonl"),
+                filter_settings=FilterSettings(
+                    exclude_classifications=("ignore",),
+                    max_items=3,
+                ),
             )
 
             records = [
@@ -55,6 +60,11 @@ class RunHistoryTests(unittest.TestCase):
             "logs\\daily_briefing.md",
         )
         self.assertEqual(records[0]["audit_log_path"], "logs\\audit.jsonl")
+        self.assertEqual(
+            records[0]["filters"]["exclude_classifications"],
+            ["ignore"],
+        )
+        self.assertEqual(records[0]["filters"]["max_items"], 3)
 
     def test_load_run_history_reads_jsonl_records(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -95,6 +105,7 @@ class RunHistoryTests(unittest.TestCase):
         self.assertIn("Run ID: new-run", report)
         self.assertNotIn("Run ID: old-run", report)
         self.assertIn("Counts: urgent=1, waiting_on_me=2, fyi=3, ignore=4", report)
+        self.assertIn("Filters: exclude_classifications=ignore; max_items=5", report)
 
     def test_build_history_report_handles_empty_history(self):
         report = build_history_report([])
@@ -107,6 +118,7 @@ class RunHistoryTests(unittest.TestCase):
         self.assertIn("Briefing Run", report)
         self.assertIn("Run ID: run-123", report)
         self.assertIn("Audit log: logs/audit.jsonl", report)
+        self.assertIn("Filters: exclude_classifications=ignore; max_items=5", report)
 
 
 def _classification(
@@ -140,6 +152,15 @@ def _history_record(run_id: str) -> dict:
         },
         "briefing_output_path": "logs/daily_briefing.md",
         "audit_log_path": "logs/audit.jsonl",
+        "filters": {
+            "include_sources": [],
+            "exclude_sources": [],
+            "include_item_types": [],
+            "exclude_item_types": [],
+            "include_classifications": [],
+            "exclude_classifications": ["ignore"],
+            "max_items": 5,
+        },
     }
 
 

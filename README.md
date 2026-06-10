@@ -116,6 +116,7 @@ briefing_agent/
   classifier.py   # classifier interface plus rule-based implementation
   cli.py          # python -m entry point
   config.py       # local TOML settings loader
+  filters.py      # local include/exclude filters
   llm_contract.py # local validation helpers for future LLM output
   models.py       # dataclasses used across the app
   review.py       # local human review prompts
@@ -161,11 +162,12 @@ logs/
 5. Build a short summary and reason for each item.
 6. Print a grouped "Daily Briefing" to the terminal.
 7. Ask you to accept, override, or skip each classification if review is enabled.
-8. Show a final confirmation summary before writing local output files.
-9. Generate one deterministic dry-run action suggestion for each finalized item.
-10. Save the briefing as Markdown if `briefing_output_path` is configured.
-11. Append one JSON object per reviewed item to the configured audit log.
-12. Append one JSON object for the whole run to the configured run history log.
+8. Apply any final-classification filters.
+9. Show a final confirmation summary before writing local output files.
+10. Generate one deterministic dry-run action suggestion for each finalized item.
+11. Save the briefing as Markdown if `briefing_output_path` is configured.
+12. Append one JSON object per reviewed item to the configured audit log.
+13. Append one JSON object for the whole run to the configured run history log.
 
 When `--no-review` is used, the CLI accepts all classifications and skips the
 interactive prompts and final confirmation.
@@ -262,6 +264,13 @@ audit_log_path = "logs/audit.jsonl"
 run_history_path = "logs/run_history.jsonl"
 briefing_output_path = "logs/daily_briefing.md"
 lookback_hours = 24
+include_sources = []
+exclude_sources = []
+include_item_types = []
+exclude_item_types = []
+include_classifications = []
+exclude_classifications = []
+max_items = 0
 ```
 
 If the file is missing, the app uses those same defaults.
@@ -275,11 +284,42 @@ The fields mean:
 - `run_history_path`: where one JSONL record per CLI execution is appended.
 - `briefing_output_path`: where the latest Markdown briefing is saved. Set it to an empty string to skip file output.
 - `lookback_hours`: a source-setting placeholder for future adapters. The current mock adapters keep all sample records loaded so the tutorial remains stable.
+- `include_sources`: optional source names to keep, such as `mock_email`.
+- `exclude_sources`: optional source names to remove, such as `mock_jira`.
+- `include_item_types`: optional item types to keep. Supported values are `email` and `jira`.
+- `exclude_item_types`: optional item types to remove. Supported values are `email` and `jira`.
+- `include_classifications`: optional final classifications to keep. Supported values are `urgent`, `waiting_on_me`, `fyi`, and `ignore`.
+- `exclude_classifications`: optional final classifications to remove.
+- `max_items`: maximum number of items to classify after source/type filters. Use `0` for no limit.
+
+Source, item type, and `max_items` filters run before classification.
+Classification filters run after classification and human review, so they use
+the final reviewed classification. Filter settings are included in run history,
+and the Markdown briefing includes a "Filters Applied" section.
+
+Example: only mock email:
+
+```toml
+include_sources = ["mock_email"]
+```
+
+Example: exclude ignored items from the final briefing:
+
+```toml
+exclude_classifications = ["ignore"]
+```
+
+Example: classify at most five items:
+
+```toml
+max_items = 5
+```
 
 Each run history record includes the run id, generated timestamp, enabled
 sources, total item count, counts by classification, Markdown briefing path, and
-audit log path. The same run id is printed in the terminal, written to the
-Markdown briefing, and included in every audit log entry for that run.
+audit log path. It also includes the configured local filters. The same run id
+is printed in the terminal, written to the Markdown briefing, and included in
+every audit log entry for that run.
 
 You can still override the audit path for a single run:
 

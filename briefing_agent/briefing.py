@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from briefing_agent.filters import FilterSummary, filters_to_dict
 from briefing_agent.models import ActionSuggestion, Category, Classification
 
 
@@ -58,6 +59,7 @@ def build_markdown_briefing(
     run_id: str,
     generated_at: datetime,
     action_suggestions: list[ActionSuggestion] | None = None,
+    filter_summary: FilterSummary | None = None,
 ) -> str:
     """Build a Markdown briefing for saving to disk."""
     suggestions_by_item_id = _suggestions_by_item_id(action_suggestions or [])
@@ -77,6 +79,9 @@ def build_markdown_briefing(
         lines.append(f"- {CATEGORY_LABELS[category]}: {counts[category]}")
 
     lines.append("")
+    if filter_summary is not None:
+        lines.extend(_build_filter_lines(filter_summary))
+        lines.append("")
 
     for category in CATEGORY_ORDER:
         items = [
@@ -168,3 +173,34 @@ def _suggestions_by_item_id(
     action_suggestions: list[ActionSuggestion],
 ) -> dict[str, ActionSuggestion]:
     return {suggestion.item_id: suggestion for suggestion in action_suggestions}
+
+
+def _build_filter_lines(filter_summary: FilterSummary) -> list[str]:
+    lines = [
+        "## Filters Applied",
+        "",
+        f"- Starting items: {filter_summary.starting_count}",
+        f"- After source/type filters: {filter_summary.after_source_type_filters}",
+        f"- After max_items: {filter_summary.after_max_items}",
+        (
+            "- After classification filters: "
+            f"{filter_summary.after_classification_filters}"
+        ),
+        f"- Total removed: {filter_summary.total_removed}",
+        "",
+        "### Settings",
+        "",
+    ]
+    for key, value in filters_to_dict(filter_summary.settings).items():
+        lines.append(f"- {key}: {_format_filter_value(value)}")
+    return lines
+
+
+def _format_filter_value(value: object) -> str:
+    if value is None:
+        return "not set"
+    if isinstance(value, list):
+        if not value:
+            return "not set"
+        return ", ".join(str(item) for item in value)
+    return str(value)

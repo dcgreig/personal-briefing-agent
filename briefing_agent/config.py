@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from briefing_agent.models import ClassifierMode
+from briefing_agent.filters import FilterSettings
+from briefing_agent.models import Category, ClassifierMode
 
 try:
     import tomllib
@@ -23,6 +24,7 @@ class Settings:
     run_history_path: Path
     briefing_output_path: Path | None
     lookback_hours: int
+    filters: FilterSettings
 
 
 DEFAULT_SETTINGS = Settings(
@@ -33,6 +35,7 @@ DEFAULT_SETTINGS = Settings(
     run_history_path=Path("logs/run_history.jsonl"),
     briefing_output_path=Path("logs/daily_briefing.md"),
     lookback_hours=24,
+    filters=FilterSettings(),
 )
 
 
@@ -50,6 +53,7 @@ def load_settings(path: Path = Path("config/settings.toml")) -> Settings:
         run_history_path=_read_path(data, "run_history_path"),
         briefing_output_path=_read_optional_path(data, "briefing_output_path"),
         lookback_hours=_read_positive_int(data, "lookback_hours"),
+        filters=_read_filter_settings(data),
     )
 
 
@@ -112,6 +116,56 @@ def _read_positive_int(data: dict[str, Any], key: str) -> int:
     if not isinstance(value, int) or value <= 0:
         raise ValueError(f"{key} must be a positive integer")
     return value
+
+
+def _read_optional_positive_int(data: dict[str, Any], key: str) -> int | None:
+    value = data.get(key, getattr(DEFAULT_SETTINGS.filters, key))
+    if value is None or value == 0:
+        return None
+    if not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{key} must be 0 or a positive integer")
+    return value
+
+
+def _read_filter_settings(data: dict[str, Any]) -> FilterSettings:
+    return FilterSettings(
+        include_sources=_read_string_tuple(data, "include_sources"),
+        exclude_sources=_read_string_tuple(data, "exclude_sources"),
+        include_item_types=_read_item_types(data, "include_item_types"),
+        exclude_item_types=_read_item_types(data, "exclude_item_types"),
+        include_classifications=_read_categories(data, "include_classifications"),
+        exclude_classifications=_read_categories(data, "exclude_classifications"),
+        max_items=_read_optional_positive_int(data, "max_items"),
+    )
+
+
+def _read_string_tuple(data: dict[str, Any], key: str) -> tuple[str, ...]:
+    value = data.get(key, getattr(DEFAULT_SETTINGS.filters, key))
+    if not isinstance(value, list | tuple) or not all(
+        isinstance(item, str) for item in value
+    ):
+        raise ValueError(f"{key} must be a list of strings")
+    return tuple(value)
+
+
+def _read_item_types(data: dict[str, Any], key: str) -> tuple[str, ...]:
+    values = _read_string_tuple(data, key)
+    allowed_values = {"email", "jira"}
+    invalid_values = [value for value in values if value not in allowed_values]
+    if invalid_values:
+        raise ValueError(f"{key} must contain only: email, jira")
+    return values
+
+
+def _read_categories(data: dict[str, Any], key: str) -> tuple[Category, ...]:
+    values = _read_string_tuple(data, key)
+    allowed_values = {"urgent", "waiting_on_me", "fyi", "ignore"}
+    invalid_values = [value for value in values if value not in allowed_values]
+    if invalid_values:
+        raise ValueError(
+            f"{key} must contain only: urgent, waiting_on_me, fyi, ignore"
+        )
+    return values
 
 
 def _parse_simple_toml(text: str) -> dict[str, Any]:

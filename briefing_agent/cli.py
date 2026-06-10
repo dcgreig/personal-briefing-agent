@@ -22,6 +22,12 @@ from briefing_agent.briefing import (
 )
 from briefing_agent.classifier import build_classifier
 from briefing_agent.config import Settings, load_settings
+from briefing_agent.filters import (
+    apply_classification_filters,
+    apply_pre_classification_filters,
+    build_filter_report,
+    build_filter_summary,
+)
 from briefing_agent.review import (
     accept_all_classifications,
     confirm_review,
@@ -127,9 +133,17 @@ def run_briefing(args: Namespace) -> None:
 
     adapters = build_source_adapters(settings, args.data_dir)
     items = load_items_from_adapters(adapters)
+    pre_filter_result = apply_pre_classification_filters(items, settings.filters)
+    if pre_filter_result.source_type_removed or pre_filter_result.max_items_removed:
+        print(
+            "Local filters removed "
+            f"{pre_filter_result.source_type_removed + pre_filter_result.max_items_removed} "
+            "item(s) before classification."
+        )
+
     classifier = build_classifier(settings.classifier_mode)
     try:
-        classifications = classifier.classify_all(items)
+        classifications = classifier.classify_all(pre_filter_result.items)
     except NotImplementedError as error:
         raise SystemExit(str(error)) from error
     briefing = build_briefing(classifications, run_id, generated_at)
@@ -138,28 +152,57 @@ def run_briefing(args: Namespace) -> None:
 
     if settings.require_human_review and not args.no_review:
         reviewed_items = review_classifications(classifications)
-        if not confirm_review(reviewed_items):
-            print("\nRun cancelled before writing outputs.")
-            return
     else:
         reviewed_items = accept_all_classifications(classifications)
         print("\nHuman review skipped by config or --no-review.")
 
-    final_classifications = finalized_classifications(reviewed_items)
-    action_suggestions = suggest_actions(reviewed_items)
+    all_final_classifications = finalized_classifications(reviewed_items)
+    classification_filter_result = apply_classification_filters(
+        all_final_classifications,
+        settings.filters,
+    )
+    final_classifications = classification_filter_result.classifications
+    filter_summary = build_filter_summary(
+        len(items),
+        pre_filter_result,
+        classification_filter_result,
+        settings.filters,
+    )
+    if classification_filter_result.classification_removed:
+        print(
+            "\nLocal classification filters removed "
+            f"{classification_filter_result.classification_removed} item(s)."
+        )
+    print(build_filter_report(filter_summary))
+
+    all_action_suggestions = suggest_actions(reviewed_items)
+    filtered_item_ids = {
+        classification.item_id for classification in final_classifications
+    }
+    action_suggestions = [
+        suggestion
+        for suggestion in all_action_suggestions
+        if suggestion.item_id in filtered_item_ids
+    ]
     print(build_action_suggestions_report(final_classifications, action_suggestions))
+
+    if settings.require_human_review and not args.no_review:
+        if not confirm_review(reviewed_items):
+            print("\nRun cancelled before writing outputs.")
+            return
 
     markdown_briefing = build_markdown_briefing(
         final_classifications,
         run_id,
         generated_at,
         action_suggestions,
+        filter_summary,
     )
     write_briefing_output(markdown_briefing, settings.briefing_output_path)
 
     append_audit_log(
         reviewed_items,
-        action_suggestions,
+        all_action_suggestions,
         audit_log_path,
         run_id,
         generated_at,
@@ -172,6 +215,7 @@ def run_briefing(args: Namespace) -> None:
         final_classifications,
         settings.briefing_output_path,
         audit_log_path,
+        settings.filters,
     )
     print(f"\nAudit log written to {audit_log_path}")
     print(f"Run history written to {settings.run_history_path}")

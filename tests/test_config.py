@@ -25,6 +25,13 @@ class ConfigTests(unittest.TestCase):
                         'run_history_path = "tmp/run_history.jsonl"',
                         'briefing_output_path = "tmp/briefing.txt"',
                         "lookback_hours = 12",
+                        'include_sources = ["mock_email"]',
+                        'exclude_sources = ["mock_jira"]',
+                        'include_item_types = ["email"]',
+                        'exclude_item_types = ["jira"]',
+                        'include_classifications = ["urgent", "fyi"]',
+                        'exclude_classifications = ["ignore"]',
+                        "max_items = 5",
                     ]
                 ),
                 encoding="utf-8",
@@ -39,6 +46,16 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(settings.run_history_path, Path("tmp/run_history.jsonl"))
         self.assertEqual(settings.briefing_output_path, Path("tmp/briefing.txt"))
         self.assertEqual(settings.lookback_hours, 12)
+        self.assertEqual(settings.filters.include_sources, ("mock_email",))
+        self.assertEqual(settings.filters.exclude_sources, ("mock_jira",))
+        self.assertEqual(settings.filters.include_item_types, ("email",))
+        self.assertEqual(settings.filters.exclude_item_types, ("jira",))
+        self.assertEqual(
+            settings.filters.include_classifications,
+            ("urgent", "fyi"),
+        )
+        self.assertEqual(settings.filters.exclude_classifications, ("ignore",))
+        self.assertEqual(settings.filters.max_items, 5)
 
     def test_default_briefing_output_path_is_markdown(self):
         self.assertEqual(
@@ -54,6 +71,15 @@ class ConfigTests(unittest.TestCase):
 
     def test_default_classifier_mode_is_rule_based(self):
         self.assertEqual(DEFAULT_SETTINGS.classifier_mode, "rule_based")
+
+    def test_default_filters_do_not_change_behavior(self):
+        self.assertEqual(DEFAULT_SETTINGS.filters.include_sources, ())
+        self.assertEqual(DEFAULT_SETTINGS.filters.exclude_sources, ())
+        self.assertEqual(DEFAULT_SETTINGS.filters.include_item_types, ())
+        self.assertEqual(DEFAULT_SETTINGS.filters.exclude_item_types, ())
+        self.assertEqual(DEFAULT_SETTINGS.filters.include_classifications, ())
+        self.assertEqual(DEFAULT_SETTINGS.filters.exclude_classifications, ())
+        self.assertIsNone(DEFAULT_SETTINGS.filters.max_items)
 
     def test_empty_briefing_output_path_disables_file_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -92,6 +118,37 @@ class ConfigTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "classifier_mode"):
+                load_settings(settings_path)
+
+    def test_zero_max_items_means_no_limit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.toml"
+            settings_path.write_text("max_items = 0", encoding="utf-8")
+
+            settings = load_settings(settings_path)
+
+        self.assertIsNone(settings.filters.max_items)
+
+    def test_invalid_filter_classification_raises_clear_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.toml"
+            settings_path.write_text(
+                'include_classifications = ["later"]',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "include_classifications"):
+                load_settings(settings_path)
+
+    def test_invalid_filter_item_type_raises_clear_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.toml"
+            settings_path.write_text(
+                'include_item_types = ["calendar"]',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "include_item_types"):
                 load_settings(settings_path)
 
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from briefing_agent.briefing import category_counts
+from briefing_agent.filters import FilterSettings, filters_to_dict
 from briefing_agent.models import Classification
 
 
@@ -19,6 +20,7 @@ def append_run_history(
     classifications: list[Classification],
     briefing_output_path: Path | None,
     audit_log_path: Path,
+    filter_settings: FilterSettings | None = None,
 ) -> None:
     """Append one JSON object describing a completed CLI run."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -36,6 +38,8 @@ def append_run_history(
         ),
         "audit_log_path": str(audit_log_path),
     }
+    if filter_settings is not None:
+        record["filters"] = filters_to_dict(filter_settings)
 
     with path.open("a", encoding="utf-8") as file:
         file.write(json.dumps(record, sort_keys=True) + "\n")
@@ -89,6 +93,7 @@ def build_history_report(records: list[dict[str, Any]], limit: int = 10) -> str:
             "Counts: "
             f"{_format_counts(record.get('counts_by_classification', {}))}"
         )
+        lines.append(f"Filters: {_format_filters(record.get('filters'))}")
         lines.append(
             f"Briefing output: {record.get('briefing_output_path', 'not configured')}"
         )
@@ -106,6 +111,7 @@ def build_run_report(record: dict[str, Any]) -> str:
         f"Enabled sources: {_join_values(record.get('enabled_sources'))}",
         f"Total items: {record.get('total_item_count', 0)}",
         f"Counts: {_format_counts(record.get('counts_by_classification', {}))}",
+        f"Filters: {_format_filters(record.get('filters'))}",
         f"Briefing output: {record.get('briefing_output_path', 'not configured')}",
         f"Audit log: {record.get('audit_log_path', 'unknown')}",
     ]
@@ -127,3 +133,24 @@ def _join_values(value: Any) -> str:
     if not value:
         return "none"
     return ", ".join(str(item) for item in value)
+
+
+def _format_filters(value: Any) -> str:
+    if not isinstance(value, dict):
+        return "not recorded"
+
+    active_filters = []
+    for key, filter_value in value.items():
+        if filter_value in (None, [], "", 0):
+            continue
+        active_filters.append(f"{key}={_format_filter_value(filter_value)}")
+
+    if not active_filters:
+        return "none"
+    return "; ".join(active_filters)
+
+
+def _format_filter_value(value: Any) -> str:
+    if isinstance(value, list):
+        return ",".join(str(item) for item in value)
+    return str(value)

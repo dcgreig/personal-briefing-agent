@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
-from json import dumps
+from json import dumps, loads
 from pathlib import Path
 from unittest.mock import patch
 
@@ -128,6 +128,56 @@ class CliTests(unittest.TestCase):
             self.assertFalse(briefing_path.exists())
             self.assertIn("Run cancelled before writing outputs.", output.getvalue())
 
+    def test_run_applies_local_filters_and_records_them(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            audit_path = temp_path / "logs" / "audit.jsonl"
+            run_history_path = temp_path / "logs" / "run_history.jsonl"
+            briefing_path = temp_path / "logs" / "daily_briefing.md"
+            settings_path = _write_settings(
+                temp_path,
+                audit_path,
+                run_history_path,
+                briefing_path,
+                enabled_sources=("mock_email", "mock_jira"),
+                extra_lines=[
+                    'include_sources = ["mock_email"]',
+                    'exclude_classifications = ["ignore"]',
+                    "max_items = 2",
+                ],
+            )
+
+            with patch(
+                "sys.argv",
+                [
+                    "briefing-agent",
+                    "run",
+                    "--config",
+                    str(settings_path),
+                    "--no-review",
+                ],
+            ):
+                with redirect_stdout(StringIO()) as output:
+                    main()
+
+            text = output.getvalue()
+            self.assertIn("Local filters removed", text)
+            self.assertIn("Filters Applied", text)
+            self.assertIn("Total removed: 6", text)
+
+            history_record = loads(
+                run_history_path.read_text(encoding="utf-8").splitlines()[0]
+            )
+            self.assertEqual(history_record["total_item_count"], 2)
+            self.assertEqual(history_record["filters"]["include_sources"], ["mock_email"])
+            self.assertEqual(
+                history_record["filters"]["exclude_classifications"],
+                ["ignore"],
+            )
+            markdown = briefing_path.read_text(encoding="utf-8")
+            self.assertIn("## Filters Applied", markdown)
+            self.assertIn("- include_sources: mock_email", markdown)
+
     def test_history_subcommand_prints_recent_runs(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -228,12 +278,14 @@ def _write_settings(
     audit_path: Path,
     run_history_path: Path,
     briefing_path: Path,
+    enabled_sources: tuple[str, ...] = ("mock_email",),
+    extra_lines: list[str] | None = None,
 ) -> Path:
     settings_path = temp_path / "settings.toml"
     settings_path.write_text(
         "\n".join(
             [
-                'enabled_sources = ["mock_email"]',
+                f"enabled_sources = [{_toml_string_list(enabled_sources)}]",
                 'classifier_mode = "rule_based"',
                 "require_human_review = true",
                 f'audit_log_path = "{_toml_path(audit_path)}"',
@@ -241,6 +293,7 @@ def _write_settings(
                 f'briefing_output_path = "{_toml_path(briefing_path)}"',
                 "lookback_hours = 24",
             ]
+            + (extra_lines or [])
         ),
         encoding="utf-8",
     )
@@ -275,6 +328,10 @@ def _history_record(run_id: str) -> dict:
 
 def _toml_path(path: Path) -> str:
     return str(path).replace("\\", "/")
+
+
+def _toml_string_list(values: tuple[str, ...]) -> str:
+    return ", ".join(f'"{value}"' for value in values)
 
 
 if __name__ == "__main__":

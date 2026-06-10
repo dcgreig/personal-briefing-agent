@@ -6,6 +6,7 @@ from briefing_agent.briefing import (
     build_briefing,
     build_markdown_briefing,
 )
+from briefing_agent.filters import FilterSettings, FilterSummary
 from briefing_agent.models import ActionSuggestion, Classification
 
 
@@ -60,6 +61,16 @@ class MarkdownBriefingTests(unittest.TestCase):
                     requires_human_approval=True,
                 )
             ],
+            filter_summary=FilterSummary(
+                starting_count=5,
+                after_source_type_filters=4,
+                after_max_items=4,
+                after_classification_filters=4,
+                source_type_removed=1,
+                max_items_removed=0,
+                classification_removed=0,
+                settings=FilterSettings(include_sources=("mock_email",)),
+            ),
         )
 
         self.assertIn("# Daily Briefing", markdown)
@@ -84,6 +95,10 @@ class MarkdownBriefingTests(unittest.TestCase):
         self.assertIn("- Rationale: A response may be needed.", markdown)
         self.assertIn("- Requires human approval: true", markdown)
         self.assertIn("- Dry-run only: no action was executed.", markdown)
+        self.assertIn("## Filters Applied", markdown)
+        self.assertIn("- Starting items: 5", markdown)
+        self.assertIn("- Total removed: 1", markdown)
+        self.assertIn("- include_sources: mock_email", markdown)
 
     def test_terminal_briefing_contains_run_id(self):
         generated_at = datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc)
